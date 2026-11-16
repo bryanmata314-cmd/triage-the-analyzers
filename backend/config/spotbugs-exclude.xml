@@ -7,4 +7,22 @@
 
      Unlike the baseline, this file may grow, but every entry is a reviewed decision. -->
 <FindBugsFilter>
+    <!-- D1: EI_EXPOSE_REP / EI_EXPOSE_REP2 are not enforced. Every one of the 219 findings is one of:
+         (a) a JPA entity (144) whose association getters must return the live, Hibernate-managed
+             collection or entity: Course.addInstructor (instructor.getCourses().add), Team/Section
+             add/remove helpers, TeamService.transferTeam and UseCaseService's getPreconditions().clear()
+             /addAll() all mutate through the getter, so a defensive copy would silently drop those
+             writes and break dirty checking and orphanRemoval;
+         (b) a Spring bean (29) storing a constructor-injected singleton, which is shared by design;
+         (c) a plain data holder (46): DTOs and records built by a Converter and serialized once, plus
+             PeerEvaluationAverage, WeeklyPeerEvaluationReport, ReminderResult, DocumentTemplate and
+             MyUserPrincipal; none is shared with untrusted code.
+         Access control is enforced by the route rules and scoped queries, not by object encapsulation. -->
+    <Match>
+        <Package name="~team\.projectpulse(\..*)?"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
 </FindBugsFilter>

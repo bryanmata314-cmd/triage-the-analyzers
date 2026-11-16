@@ -13,5 +13,21 @@
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
     <description>PMD quickstart, with Project Pulse's decisions.</description>
     <rule ref="rulesets/java/quickstart.xml">
+        <!-- D2: 26 of the 30 classes flagged are JPA entities, and JPA requires a no-arg constructor.
+             Most also declare argument constructors (Activity, Team, Section, ...), so no implicit one
+             exists. Where the empty constructor is the only one, UnnecessaryConstructor says delete it:
+             legal today, but the day someone adds an argument constructor the entity fails at runtime
+             (Hibernate cannot instantiate it), not at compile time. The other four (Result,
+             RatingAverage, PeerEvaluationAverage, WeeklyPeerEvaluationReport) are setter-populated
+             holders; EvaluationService builds the last two with new X() and setters. Writing every
+             constructor out is the no-Lombok convention (KD-no-codegen), and a "required by JPA"
+             comment repeated on 30 constructors would tell a reader nothing the @Entity does not. -->
+        <exclude name="UncommentedEmptyConstructor"/>
+        <exclude name="UnnecessaryConstructor"/>
+        <!-- D4: the code logs through SLF4J with {} placeholders, which already skips formatting when
+             the level is off. All four flagged calls (AuthController, ReminderService,
+             WeeklyReminderScheduler, DocumentTemplateRegistry) pass only cheap accessors such as
+             getName() or size(), so an isXxxEnabled() guard would add a branch and save nothing. -->
+        <exclude name="GuardLogStatement"/>
     </rule>
 </ruleset>
